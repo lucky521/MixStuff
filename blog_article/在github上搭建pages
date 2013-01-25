@@ -1,0 +1,121 @@
+  直到github被墙了，我才知道github还有如此强大的用处。囧。。还好今天，github又解封了。不知道是不是李开复等大牛抗议的结果。
+  之前因为风口浪尖中的火车票抢票插件中引用了放在github中的js文件，使得github访问量过猛被弄瘫痪了一下。github被墙也许和抢票插件有一点点关系。也有人说是github pages上出现了不和谐的内容，这有可能是主要原因，这篇文章就介绍一下这个。
+  其实这是一种手段而不是一种纯粹的技术。
+
+  github就设计了Pages功能，允许用户自定义项目首页，用来替代默认的源码列表。所以，github Pages可以被认为是用户编写的、托管在github上的静态网页。
+  github提供模板，允许站内生成网页，但也允许用户自己编写网页，然后上传，这种上传并不是单纯的上传，而是会经过Jekyll程序的再处理。
+  Jekyll是一个静态站点生成工具，它会根据网页源码生成静态文件。这里要学习的是jekyll所使用的Liquid模板语言的基本格式。
+
+  整个思路：先在本地编写符合Jekyll规范的网站源码，然后上传到github，由github生成并托管整个网站。
+
+优点：免费，访问速度快，文章不易丢失。
+缺点：需要懂些技术，只适用于小型网站。
+
+下面是简要的步骤，前四步是在按照规范设计网站代码，第五步是发布到github上去。
+第一步，在本地创建项目。
+$ mkdir jekyll_demo
+$ cd jekyll_demo
+$ git init
+
+
+第二步，创建设置文件。
+在项目根目录下立一个名为_config.yml的文本文件，内容为
+baseurl: /jekyll_demo
+
+第三步，创建模板文件。
+$ mkdir _layouts
+创建一个默认的模板文件default.html。
+[code lang="html"]
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>{{ page.title }} </title>
+</head>
+
+<body>
+{{ content }}
+</body>
+</html>
+[/code]
+
+
+第四步，创建一篇文章。
+在项目根目录下创建文章目录
+$ mkdir _posts
+文章就是普通的文本文件，其文件名格式为：2012-08-25-hello-world.html。
+注意，文件名必须为"年-月-日-文章标题.后缀名"的格式。如果网页代码采用html格式，后缀名为html；如果采用markdown格式，后缀名为md。
+[code lang="html"]
+---
+layout: default
+title: 你好，世界
+---
+<h2>{{ page.title} }</h2>
+<p>我的第一篇文章</p>
+<p>{{ page.date | date_to_string }}</p>
+[/code]
+
+每篇文章的头部，必须有一个yaml文件头，用来设置一些元数据。它用三根短划线"---"，标记开始和结束，里面每一行设置一种元数据。
+在yaml文件头后面，就是文章的正式内容，里面可以使用模板变量。{{ page.title }}就是文件头中设置的"你好，世界"，{{ page.date }}则是嵌入文件名的日期（也可以在文件头重新定义date变量），"| date_to_string"表示将page.date变量转化成人类可读的格式。
+
+第五步，创建网站首页。
+Liquid模板语言规定，输出内容使用两层大括号，单纯的命令使用一层大括号。
+[code lang="html"]
+---
+layout: default
+title: 我的Blog
+---
+<h2>{{ page.title }}</h2>
+<p>最新文章</p>
+<ul>
+{% for post in site.posts %}
+<li>{{ post.date | date_to_string }} 
+<a href="{{ site.baseurl }} {{ post.url }}">{{ post.title }}</a>
+</li>
+{% endfor %}
+</ul>
+[/code]
+
+第六步，在github上发布内容。
+下面就是在github上创建项目啦。首先创建一个名新repo，名字还叫jekyll_demo，在settings中选择自动生成pages。
+过十分钟左右，自动产生的pages就可以看到了。
+地址是http://username.github.com/jekyll_demo/
+接下来需要把前五步设计的内容放进来，制成自己的页面。
+[code lang="shell"]
+# 创建名为gh-pages没有父节点的分支
+$ git checkout --orphan gh-pages
+# 清空分支路径下的内容
+$ git rm -rf .
+[/code]
+然后把前五步的内容放进来。
+[code lang="shell"]
+$ git add .
+$ git commit -a -m "First pages commit"
+$ git push origin gh-pages
+[/code]
+过十分钟再访问http://username.github.com/jekyll_demo/
+如果想自己的域名访问，可以在设置中绑定域名。
+
+
+在本地编译jekyll：
+  在依照jekyll编写的代码多少少会犯bug，但是传到github上十分钟才能得结果，如果有错误，只会返回冷冷的一句page build failed，根本不知道哪儿有bug。
+  于是，就打算在本地安装jekyll进行调试。这也是一个开源项目，在http://jekyllrb.com。
+  
+安装脚本：
+[code lang="shell"]
+$ sudo apt-get install ruby
+$ sudo apt-get install gem
+$ sudo gem install jekyll
+[/code]
+
+在项目所在目录下编译：
+[code lang="shell"]
+$ jekyll --safe
+[/code] 
+如果代码有问题，就会提示错误。
+当bug全部修改过之后，就可以生产_site目录，里面就是编译好的静态网页了。
+
+详情都在https://help.github.com/categories/20/articles
+
+好啦。上面搞定了基本过程，那么octopress是什么呢。octopress这个框架就是要在jekyll的基础上制作简单又好看的blog。
+下一篇博文再说吧。
