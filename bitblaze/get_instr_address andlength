@@ -27,13 +27,11 @@ my $n_taint;
 my @tmp_taint_origin;
 my $bp=0;
 my $bn=0;
-#trace 文件的结构是20字节的文件头(重要的是进程的个数)，44字节的进程记录（主要的是第37－40字节的模块数）
-# 下面是模块数乘以模块大小40，接着就是每个指令的开始，先是地址到偏移量的24字节（重要的是9－10字节的指令长度，11字节的操作数，），然后是inst_length指令，然后是第一个操作数(重要的是3－4字节，标记是否有污点),如果有的话是污点的记录13字节（重要的是第一字节有多少个污点记录空间和第6－9字节，这个是orgin）
 
 push(@tmp_taint_origin,0);
 
 @stat1=stat(TRACE);
-$file_length=$stat1[7];                #计算文件的大小
+$file_length=$stat1[7];                #get filesize by stat()
 
 seek TRACE,56,0;
 read (TRACE,$n_mods,4);		
@@ -79,7 +77,7 @@ while($eh_start<$file_length)
 		read (TRACE,$opr_number,1);
 		$opr_number = unpack("C*",$opr_number);
 		#print "操作数：".$opr_number."\n";
-		$eh_start=$eh_start+$eh_adr_df_length+$inst_length;           #第一个操作数开始的位置
+		$eh_start=$eh_start+$eh_adr_df_length+$inst_length;           #position of first oprerand
 
 		for($i=0;$i<$opr_number;$i++)
 		{
