@@ -1,0 +1,167 @@
+#! usr/bin/perl -w
+open (TRACE,$ARGV[0]) or die "$!";
+binmode(TRACE);
+open (TRACE_READ,$ARGV[0].'.txt');
+open (TRACE_READ_RESULT,'>'.$ARGV[0].'_withlength.txt');
+#{
+#die"open file failed!($!)";
+#}
+##open RESULT,">1024_origin.txt";
+my $th_length=20;              #0－19 trace_header
+my $pr_length=44;              #20-63 process_record
+my $mod_length=40;		#module_record
+my $eh_adr_df_length=24;	#address + tid + inst_size + num_oprands + tp + eflags + cc_op + df = 24 bytes
+my $opr_length=14;		#first 14 bytes of an oprerand ,except taint_record_t	
+my $taint_length=13;
+
+my $inst_length=0;
+my $n_mods;
+my $file_length;
+my $eh_start;
+my $taint_space;
+my $opr_number=0;
+my $taint_origin;
+my $n=0;
+my $trap=0;
+my $n_taint;
+my @tmp_taint_origin;
+my $bp=0;
+my $bn=0;
+#trace 文件的结构是20字节的文件头(重要的是进程的个数)，44字节的进程记录（主要的是第37－40字节的模块数）
+# 下面是模块数乘以模块大小40，接着就是每个指令的开始，先是地址到偏移量的24字节（重要的是9－10字节的指令长度，11字节的操作数，），然后是inst_length指令，然后是第一个操作数(重要的是3－4字节，标记是否有污点),如果有的话是污点的记录13字节（重要的是第一字节有多少个污点记录空间和第6－9字节，这个是orgin）
+
+push(@tmp_taint_origin,0);
+
+@stat1=stat(TRACE);
+$file_length=$stat1[7];                #计算文件的大小
+
+seek TRACE,56,0;
+read (TRACE,$n_mods,4);		
+$n_mods=unpack("I*",$n_mods);		#get n_mods
+
+seek TRACE,($th_length+$pr_length+($n_mods*40)),0;
+$eh_start=tell(TRACE);
+print "eh_start:$eh_start\n";
+print "模块数$n_mods\n";
+$eh_st=$eh_start;
+#/////////////////////////////////////////////////////
+my @trace_read;
+while(<TRACE_READ>)
+{
+	push(@trace_read,$_);
+}
+my $trace_read_i=0;	#count
+#/////////////////////////////////////////////////////
+while($eh_start<$file_length)
+	{
+		if($bn!=$bp)
+		{
+			$bp=$bn;
+			$eh_st=$eh_start;
+		}
+		seek TRACE ,$eh_start,0;
+		read (TRACE,$inst,4);
+		$inst = unpack("I*",$inst);
+		$inst = sprintf("%08x",$inst);
+		print TRACE_READ_RESULT "Address：".$inst;
+
+		seek TRACE ,$eh_start+8,0;
+		read (TRACE,$inst_length,2);
+		$inst_length=unpack("S*",$inst_length);
+
+		print TRACE_READ_RESULT "  Length = ".$inst_length."\n";
+		
+		#chomp($trace_read[$trace_read_i]);
+		#$trace_read[$trace_read_i] = $trace_read[$trace_read_i]."  length=".$inst_length."\n";
+		#++$trace_read_i;
+		
+		seek TRACE ,$eh_start+10,0;
+		read (TRACE,$opr_number,1);
+		$opr_number = unpack("C*",$opr_number);
+		#print "操作数：".$opr_number."\n";
+		$eh_start=$eh_start+$eh_adr_df_length+$inst_length;           #第一个操作数开始的位置
+
+		for($i=0;$i<$opr_number;$i++)
+		{
+			$n_taint=0;
+			seek TRACE,$eh_start+2,0;
+			read (TRACE,$taint,2);
+			$taint=unpack("S*",$taint);
+			if($taint!=0)
+			{
+			#print"污点".($n+1)."的第".$i."个污点:".$taint."\n";
+			}			
+			while(($taint/2)!=0)
+			{
+				if(($taint%2)!=0)
+				{
+					$n_taint++;
+				}
+				$taint=$taint/2;
+			}
+			#print"taint number:".$n_taint."\n";
+			$eh_start+=$opr_length;           #开始记录污点
+			if($n_taint!=0)
+			{
+				$b=0;
+				for($j=0;$j<$n_taint;$j++)                 #是否有污点空间
+				{
+					seek TRACE,$eh_start,0;
+					read (TRACE,$taint_space,1);
+					#$taint_space2=unpack("H*",$taint_space);
+					$taint_space=unpack("C*",$taint_space);
+					#print "EH_start:".$eh_start."\n";
+					if($taint_space==0)
+					{
+						$eh_start=$eh_start+1;
+					}else
+					{
+						seek TRACE,$eh_start+5,0;
+						read (TRACE,$taint_origin,4);
+					#	$taint_origin2=unpack("H*",$taint_origin);
+						$taint_origin=unpack("I*",$taint_origin);
+					#	print "    origin$n:".$taint_origin2."\n";
+						foreach(@tmp_taint_origin)
+						{
+							if($_==$taint_origin){$b=1;}
+						}
+							if(($b==0)&&($j==$n_taint-1))
+							{
+								$bn++;
+								push(@tmp_taint_origin,$taint_origin);
+								if($bp==0){shift @tmp_taint_origin;}
+								$n++;
+								##print RESULT "\n第".$n."个污点：";
+								##print "\n第".$n."个污点：".$taint_origin."\n";
+								##print RESULT "    origin$n:".$taint_origin;
+								##open (TRACES,">tace$n")or die "$!";
+								##binmode(TRACES);
+								seek TRACE,0,0;
+								#read (TRACE,$trace_head,$th_length+$pr_length+($n_mods*40));
+								#$trace_head=unpack("H*",$trace_head);
+								##print TRACES $trace_head;
+								seek TRACE,$eh_start,0;
+								#read (TRACE,$eh_trace,$eh_start+$taint_length-$eh_st);
+								#$eh_trace=unpack("H*",$eh_trace);
+								##print TRACES $eh_trace;
+								#$tmp_taint_origin=$taint_origin;
+							}
+						$eh_start=$eh_start+$taint_length;
+					}
+				}
+			}
+		}
+		$trap++;
+		#if($trap==1){last;}
+	}
+##print RESULT "\n总共有$n个污点";
+#}
+#//////////////////////////////
+#for($i=0;$i<@trace_read;++$i)
+#{
+#	print TRACE_READ_RESULT $trace_read[$i];
+#}
+#//////////////////////////////
+close TRACE;
+close TRACE_READ;
+close TRACE_READ_RESULT;
