@@ -1,0 +1,100 @@
+本地与FTP远端的数据同步
+
+一，FTP
+一个常见的FTP服务器软件：vsftpd
+启动命令 sudo service vsftpd start/restart
+配置文件在 /etc/vsftpd.conf
+
+匿名用户文件目录在 /srv/ftp/
+正常用户默认在 /home/username/
+
+常用命令：
+	>ftp [host]
+	>get [remotefile] [localfile]
+	>put [localfile] [remotefile]	
+	>bye
+	>简单的目录操作
+
+上传目录：
+FTP不能直接递归传送目录，可以先压缩目录再传送。
+$ tar czvf this.tar.gz ./*.txt
+
+
+二，FTP同步工具
+FTP Synchronizer - Windows
+BatchSync FTP - Windows
+Synchronize It - Windows
+ScriptFTP - Windows
+ftpsync2d at code.google.com - Free, Open Source, Python
+
+lftp-mirror
+Language: Python
+Type: script
+Features: The above mentioned
+License: GPLv3
+Author(s): joe di castro
+
+lftp
+Language: C++
+Type: shell app
+Features: Light, fast and powerful. Perhaps the best FTP client available for the command line. Full of options and very versatile
+License: GPLv3
+Author(s): Alexander V. Lukyanov
+
+wget -m
+Language: C
+Type: shell app
+Features: Only works in one direction: local to remote
+License: GPLv3
+Author(s): Hrvoje Nikšić, Mauro Tortonesi, Steven Schubiger, Micah Cowan, Giuseppe Scrivano
+
+csync
+Language: C
+Type: shell app
+Features: Bidirectional but only works with sftp. Not as configurable as lftp
+License: GPLv2
+Author(s): Andreas Schneider
+
+weex
+Language: C
+Type: shell app
+Features: Only works in one direction: local to remote
+License: GPLv2
+Author(s): Yuuki Ninomiya, Ludovic Drolez
+
+ftpsync
+Language: Perl
+Type: script
+Features: Bidirectional, does not support sftp. Without many options as lftp
+License: GPLv2
+Author(s): Christoph Lechleitner
+
+ncftp
+Language: C
+Type: shell app
+Features: Bidirectional. A little messy.
+License: Clarified Artistic License
+Author(s): Mike Gleason
+
+curlftpfs + rsync
+Language: C
+Type: shell app
+Features: Curlftpfs used to mount a local file system pointed to the FTP server and then used rsync to synchronize
+License: GPLv2 (curlftpfs) & GPLv3 (rsync)
+Author(s): Robson Braga Araujo (curlftpfs) & Andrew Tridgell, Paul Mackerras, Wayne Davison (rsync)
+
+oak/ftpsync
+vincentdieltiens/ftpsync
+joedicastro/lftp-mirror
+
+
+脚本运行时总是遇到一个关于ftplib的问题：ftplib.error_perm: 550
+研究了好几天还没解决，弄好了上代码。
+
+
+PS：在‘珍爱生命·远离度娘’的号召下，刻意不使用百度同时刻意不点击google的中文结果一段时间，发现感觉良好。
+总结了四个最喜爱的网站，要经常访问：
+	Google 大量的服务都在使用；
+	Github 无尽的财富；
+	Stackoverflow 无尽的财富；
+	Quora 比知乎更知乎，并且quora有Android客户端，可满足我等屌丝。
