@@ -1,0 +1,33 @@
+optparse 选项处理python模块
+
+optparse是python的一个负责命令行选项处理的模块。
+
+代码的大致框架：
+[code lang="python"]
+#加载模块
+from optparse import OptionParser
+#定义用法
+usage = "usage: %prog [options] arg" 
+#生成OptionParse实例
+parser = OptionParser(usage=usage,
+                      version="%prog "+__version__,
+                      description='''%prog is ～～. I'am Lucky.''')
+#添加命令行参数
+parser.add_option("-f", "--file", dest="filename",
+                  help="write report to FILE", metavar="FILE")
+parser.add_option("-q", "--quiet",
+                  action="store_false", dest="verbose", default=True,
+                  help="don't print status messages to stdout")
+#解析命令行参数
+(options, args) = parser.parse_args()
+[/code]
+
+
+parse_args()方法的参数：
+dest表示对应的参数值对应的参数。
+action指示optparser在解析参数时应该如何处理。
+action="store" 表示将对应参数值保存到options对象里。
+action="store_true/store_false"用于处理参数后不带值的情况。
+type表示参数值的数据类型。
+default表示参数的默认值。
+help是说明文字。

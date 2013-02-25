@@ -1,6 +1,6 @@
 本地与FTP远端的数据同步
 
-一，FTP
+<strong>一，FTP</strong>
 一个常见的FTP服务器软件：vsftpd
 启动命令 sudo service vsftpd start/restart
 配置文件在 /etc/vsftpd.conf
@@ -20,7 +20,7 @@ FTP不能直接递归传送目录，可以先压缩目录再传送。
 $ tar czvf this.tar.gz ./*.txt
 
 
-二，FTP同步工具
+<strong>二，FTP同步工具</strong>
 FTP Synchronizer - Windows
 BatchSync FTP - Windows
 Synchronize It - Windows
@@ -33,7 +33,7 @@ Type: script
 Features: The above mentioned
 License: GPLv3
 Author(s): joe di castro
-
+<!--more-->
 lftp
 Language: C++
 Type: shell app
@@ -88,12 +88,12 @@ vincentdieltiens/ftpsync
 joedicastro/lftp-mirror
 
 
-脚本运行时总是遇到一个关于ftplib的问题：ftplib.error_perm: 550
+脚本运行时总是遇到一个关于ftplib的问题：<strong>ftplib.error_perm: 550</strong>
 研究了好几天还没解决，弄好了上代码。
 
 
 PS：在‘珍爱生命·远离度娘’的号召下，刻意不使用百度同时刻意不点击google的中文结果一段时间，发现感觉良好。
-总结了四个最喜爱的网站，要经常访问：
+总结了四个喜爱的网站，要经常访问：
 	Google 大量的服务都在使用；
 	Github 无尽的财富；
 	Stackoverflow 无尽的财富；
