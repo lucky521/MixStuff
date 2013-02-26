@@ -1,0 +1,263 @@
+#!/usr/bin/env python
+#--coding=utf-8--
+import sys
+import httplib2
+from lxml.html import fromstring
+from optparse import OptionParser
+from multiprocessing import Process, Queue
+from urlparse import urlsplit, urljoin, urlunsplit
+
+__version__ = 'Lucky-2.0'
+
+#########################################################################
+#running飞转效果
+class Spinner(object):
+    def __init__(self):
+        self.status = 0
+        self.locations = ['|', '/', '-', '\\']
+
+    def spin(self):
+        sys.stderr.write("%s\r" % self.locations[self.status])
+        sys.stderr.flush()
+        self.status = (self.status + 1) % 4
+
+#
+class Response(object):
+    def __init__(self, url, status_code=-1, content=None, links=[]):
+        self.url = url
+        self.status_code = status_code
+        self.content = content
+        self.links = links
+
+########################################################################
+
+class Patu(object):
+    #参数由命令行选项确定
+    def __init__(self, urls=[], spiders=1, spinner=True, verbose=False, depth=-1, input_file=None, generate=False):
+        # Set up the multiprocessing bits
+        self.processes = [] 	#线程列表
+        self.task_queue = Queue()  #未完成任务队列
+        self.done_queue = Queue()  #已完成任务队列
+        
+        self.next_urls = {}
+        self.queued_urls = {}
+        self.seen_urls = set()
+        
+        self.spinner = Spinner()
+
+        # Generate the initial URLs, either from command-line, stdin, or file
+        if input_file: #如果有此选项，则从输入文件中得到url
+            if input_file == '-':
+                f = sys.stdin
+            else:
+                f = open(input_file)
+            for line in f:
+                bits = line.strip().split("\t")
+                if bits == ['']:
+                    continue
+                elif len(bits) == 1:
+                    self.next_urls[bits[0]] = None
+                else:
+                    self.next_urls[bits[0]] = bits[1]
+            f.close()
+        else:
+            self.urls = []
+            h = httplib2.Http(timeout = 60)
+            #创建一个http对象
+            for url in urls:
+                if not url.startswith("http://"):
+                    url = "http://" + url
+                #给url加上头
+                # Follow initial redirects here to set self.constraints
+                try:
+                    #发出同步请求，并获取内容
+                    #resp 返回信息头，是一个对象。
+                    #content 网页内容
+                    #print 'url : ', url
+                    resp, content = h.request(url)
+                    url = resp['content-location']
+                    #print 'url : ', url
+                    #XXX：
+                except:
+                    # This URL is no good. Keep it in the queue to show the
+                    # error later
+                    pass
+                self.urls.append(url)
+                self.next_urls[url] = None 
+                #print self.next_urls
+            self.constraints = [''] + [urlsplit(url).netloc for url in self.urls]
+            #urlsplit()将url切分为几个属性，netloc是其中一项Network location part，一般就是主域名or主机名
+
+	#参数值赋给对象的对应属性
+        self.spiders = spiders
+        self.show_spinner = spinner
+        self.verbose = verbose
+        self.depth = depth
+        self.input_file = input_file
+        self.generate = generate
+
+    def worker(self):
+        """
+        Function run by worker processes
+        """
+        try:
+            h = httplib2.Http(timeout = 60)
+            for url in iter(self.task_queue.get, 'STOP'):
+                result = self.get_urls(h, url)	#对任务列表中的每个url检索url
+                self.done_queue.put(result)	#将检索结果（Response对象）加入队列
+        except KeyboardInterrupt:
+            self.done_queue.put(Response(url, -1))
+
+    def get_urls(self, h, url):
+        """
+        Function used to calculate result
+        """
+        links = []
+        try:
+            resp, content = h.request(url)
+            if self.input_file:
+                # Short-circuit if we got our list of links from a file
+                return Response(url, resp.status)
+            elif resp.status != 200:
+                return Response(url, resp.status)
+            elif urlsplit(resp['content-location']).netloc not in self.constraints:
+                # httplib2 follows redirects automatically
+                # Check to make sure we've not been redirected off-site
+                return Response(url, resp.status)
+            else:
+                html = fromstring(content)
+                #XXX：解析网页内容 from lxml.html
+                #fromstring() parses XML from a string directly into an Element
+        except Exception, e:
+            print "%s %s" % (type(e), str(e))
+            return Response(url)
+            
+        # Add relevant links
+        for link in html.cssselect('a'):
+            if not link.attrib.has_key('href'):
+                # Skip links w/o an href attrib
+                continue
+            href = link.attrib['href']
+            absolute_url = urljoin(resp['content-location'], href.strip())
+            parts = urlsplit(absolute_url) #分离url各属性
+            if parts.netloc in self.constraints and parts.scheme == 'http':
+                # Ignore the #foo at the end of the url
+                no_fragment = parts[:4] + ('',)
+                links.append(urlunsplit(no_fragment))
+        return Response(url, resp.status, content, links)
+        #XXX:返回的是Response对象
+
+    def process_next_url(self):
+        response = self.done_queue.get() #取一个Response对象
+        referer = self.queued_urls[response.url]
+        result = '[%s] %s (from %s)' % (response.status_code, response.url, referer)
+
+        if response.status_code == 200: #OK/正常
+            if self.verbose:
+                print result	#输出详细内容
+                sys.stdout.flush()
+                # Calling sys.stdout.flush() forces it to "flush" the buffer, 
+                # meaning that it will write everything in the buffer to the terminal,
+            elif self.generate:
+                print "%s\t%s" % (response.url, referer) #结果写入文件
+            elif self.show_spinner:
+                self.spinner.spin()
+        else:
+            print result
+            #输出错误页信息
+            sys.stdout.flush()
+            
+        self.seen_urls.add(response.url)
+        #print self.seen_urls
+        del(self.queued_urls[response.url])
+        
+        for link in response.links:
+            if link not in self.seen_urls and link not in self.queued_urls:
+                # remember what url referenced this link
+                self.next_urls[link] = response.url
+
+    def crawl(self):
+        # For the next level
+        current_depth = 0
+        try:
+            # Start worker processes
+            for i in range(self.spiders):
+                p = Process(target=self.worker) #创建工作线程
+                p.start() 
+                self.processes.append(p) #进程加入进程列表
+                #print self.processes
+
+	    # 开始每层检索
+            while len(self.next_urls) > 0 and (current_depth <= self.depth or self.depth == -1):
+                if self.verbose:
+                    print "Starting link depth %s" % current_depth
+                    sys.stdout.flush()
+
+                # place next urls into the task queue, possibly
+                # short-circuiting if we're generating them
+                for url, referer in self.next_urls.iteritems():
+                    self.queued_urls[url] = referer
+                    if self.generate and current_depth == self.depth:
+                        #层数到达指定层
+                        self.done_queue.put(Response(url, 200))
+                    else:
+                        self.task_queue.put(url)
+                self.next_urls = {}
+
+		#处理这些url
+                while len(self.queued_urls) > 0:
+                    self.process_next_url()
+                    
+                current_depth += 1
+
+        except KeyboardInterrupt:
+            pass
+        finally:
+            # Give the spiders a chance to exit cleanly
+            for i in range(self.spiders):
+                self.task_queue.put('STOP')
+            for p in self.processes:
+                # Forcefully close the spiders
+                p.terminate()
+                p.join()
+###########################################################################
+def main():
+    usage = "usage: %prog [options] url [output-file]"
+    parser = OptionParser(usage=usage,
+                          version="%prog "+__version__,
+                          description='''%prog is small crawler.I'am Lucky.''')
+    options_a = [
+        ["-s", "--spiders", dict(dest="spiders", type="int", default=1, help="sends more than one spider")],
+        ["-S", "--nospinner", dict(dest="spinner", action="store_false", default=True, help="turns off the spinner")],
+        ["-v", "--verbose", dict(dest="verbose", action="store_true", default=False, help="outputs every request (implies --nospiner)")],
+        ["-d", "--depth", dict(dest="depth", type="int", default=-1, help="does a breadth-first crawl, stopping after DEPTH levels")],
+        ['-g', '--generate', dict(dest='generate', action='store_true', default=False, help='generate a list of crawled URLs on stdout')],
+        ['-i', '--input', dict(dest='input_file', type='str', default='', help='file of URLs to crawl')],
+    ]
+    #Add commandline arguments : paser.add_option()
+    for s, l, k in options_a:
+        parser.add_option(s, l, **k)
+    #Parse the commandline arguments
+    (options, args) = parser.parse_args()
+
+    
+    #XXX: get urls in args
+    urls = [unicode(url) for url in args]
+    kwargs = {
+        'urls': urls,
+        'spiders': options.spiders, #线程个数
+        'spinner': options.spinner,
+        'verbose': options.verbose, #是否输出详细信息
+        'depth': options.depth,	 #检索深度
+        'generate': options.generate, #结果写入文件
+        'input_file': options.input_file
+    }
+
+    #begin crawling
+    spider = Patu(**kwargs)
+    spider.crawl()
+    print
+
+
+if __name__ == '__main__':
+    sys.exit(main())
