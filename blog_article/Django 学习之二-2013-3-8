@@ -1,0 +1,87 @@
+Django的学习借助于其强大的手册Django Book，该手册已经被翻译为中文，作为初学者我只能一点一点看啦。
+
+一个最简单的Django项目可以由下面几个文件组成：
+.
+|- __init__.py
+|- manage.py
+|- setting.py
+|- urls.py
+|- views.py
+|- mytemplate.html
+
+运行manage.py文件来启动这个项目的web服务。 
+[code lang="shell"]
+$ python manage.py runserver 12.12.12.114:8080
+[/code]
+
+
+首先看url.py文件，这里配置url与视图函数的映射。
+下面我设置了三个url，第一个是首页，第三个是从url提取1个参数的情况。
+[code lang="python"]
+from django.conf.urls.defaults import *
+from lucky.views import index
+from lucky.views import hello
+from lucky.views import welcome
+urlpatterns = patterns('',
+	(r'^$', index),
+	(r'^hello/$', hello),
+	(r'^name/(.+)/$', welcome),
+)
+[/code]
+<!--more-->
+对url可以进行正则匹配的设计。
+[code]
+.	任意单一字符      
+\d	任意一位数字    
+[A‐Z]	A 到 Z中任意一个字符(大写) 
+[a‐z]	a 到 z中任意一个字符(小写)
++	匹配一个或更多 (例如, \d+ 匹配一个或 多个数字字符)
+[^/]+	一个或多个不为‘/’的字符
+*	零个或一个之前的表达式(例如:\d? 匹配零个或一个数字)
+*	匹配0个或更多 (例如, \d* 匹配0个 或更多数字字符)
+{1,3}	介于一个和三个(包含)之前的表达式(例如,\d{1,3}匹配一个或两个或三个数字)
+[/code]
+
+然后视图文件，设置每个函数的响应方法，其中welcome视图函数引用了模板文件，该模板中有current_date和your_name两个变量。
+current_date是由系统时间函数获得的，your_name是由url的参数获得的。
+[code lang="python"]
+from django.http import HttpResponse
+from django.template import Template, Context
+def index(request):
+	return HttpResponse("Welcome!")
+def hello(request):
+	return HttpResponse("Hello world.")
+import datetime
+def welcome(request, param1):
+	fp = open('mytemplate.html')
+	t = Template( fp.read() )
+	fp.close()
+	now = datetime.datetime.now()
+	c = Context({'current_date': now,'your_name': param1})
+	html = t.render(c)
+	return HttpResponse(html)
+[/code]
+
+模板文件可以将视图和逻辑分离开。
+[code lang="html"]
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>名字</title>
+</head>
+<body>
+<center><br><br><br>
+<h2>{{ your_name }}，欢迎你！</h2>
+<br><br>
+当前时间： {{ current_date }}.
+</center>
+</body></html>
+[/code]
+
+对于这个项目，可以访问
+http://12.12.12.114：8080
+http://12.12.12.114：8080/hello
+http://12.12.12.114：8080/name/~youname~
+
+
+
