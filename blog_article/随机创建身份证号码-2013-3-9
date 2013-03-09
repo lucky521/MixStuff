@@ -1,0 +1,64 @@
+  上周头一次玩三国杀，玩的晕头转向的，各种反应不过来。昨天就下载了一个三国杀在网上练练。注册的时候需要身份证。我几乎没怎么注册过游戏，可能为了控制未成年人游戏时间，现在注册游戏帐号都得要身份证号，但我确实不想把自己的号码泄漏给它。只能“随意”输入了。
+  注册页面对身份证号还是会做比较详细的校验的，不过肯定不可能去公安部数据库匹配，所以只是根据号码的创建规则去校验。想用一个假的号码还是需要规则的。
+  1、号码前6位：对应地区码，这个库很容易在网络上获得。
+  2、号码中间8位：出生年月日。这个也是要用存在的日期。
+  3、号码后面3位：这个可以是随机的，这三位的最后一位代表性别，奇数为男，不过对于注册账户没有用处了。
+  4、最后1位：校验位，下面会介绍。
+  
+为了保证身份证号码的正确性，最后1位使用了一个校验位。其校验算法如下： 
+1.将前面的身份证号码17位数分别乘以不同的系数，从第1位到第17位的系数分别为：7 9 10 5 8 4 2 1 6 3 7 9 10 5 8 4 2。
+2.将这17位数字和系数相乘的结果相加。 
+3.用加出来和除以11，余数可能为0 1 2 3 4 5 6 7 8 9 10，其分别映射为的最后一位身份证的号码为1 0 X 9 8 7 6 5 4 3 2。 
+4.通过上面得知如果余数是2，就会在身份证的第18位数字上出现罗马数字的Ⅹ。如果余数是10，身份证的最后一位号码就是2。 
+
+为了，得到一个随机的身份证号，我做的就是根据规则随机产生了。不多说，都在代码中了。
+<!--more-->
+[code lang="python"]
+#create a random ID number
+#file "location" is database of location-number
+import random, re
+def build_location():	#6
+	data = open('location')
+	r = random.randint(1, 3519)
+	for i in range(1, r):
+		line = data.readline()
+	data.close()
+	pattern = re.compile('\d{6}')
+	match = pattern.search(line)
+	if match:
+		return match.group()
+	
+def build_birth():	#8
+	year = random.randint(1970, 1990)
+	month = random.randint(0, 12)
+	month = "%02d" %month
+	day = random.randint(0, 28)
+	day = "%02d" %day
+	birth = str(year) + str(month) + str(day)
+	return birth
+
+def build_third():	#3
+	a = random.randint(000, 999)
+	a = "%03d" %a
+	return str(a)
+
+def compute_last(num_before):	#1
+	weight = [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2]
+	endone = [1, 0, 'X', 9, 8, 7, 6, 5, 4, 3, 2]
+	s = 0
+	for i in range(0, 17):
+		n = int(num_before[i])
+		s = s + n*weight[i]
+	return str(endone[s%11]) 
+
+##########################################
+myloc = build_location()
+mybirth = build_birth()
+mythird = build_third()
+num_before = myloc + mybirth + mythird
+last_one = compute_last(num_before)
+
+myid = num_before + last_one
+print myid
+##########################################
+[/code]
