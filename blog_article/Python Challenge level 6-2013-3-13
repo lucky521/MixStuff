@@ -1,8 +1,6 @@
-#--coding=utf-8--
-#http://www.pythonchallenge.com/pc/def/channel.html
-'''
 Python Challenge level 6: “now there are pairs”
-提示非常少
+
+这一关的提示非常少。
 观察页面源码第一行
 <!-- <-- zip -->
 这个提示是啥意思捏。。
@@ -17,8 +15,8 @@ hint1: start from 90052
 hint2: answer is inside the zip
 
 好吧，写代码吧。
-'''
-
+<!--more-->
+[code lang="python"]
 import re,sys
 global name
 name = '90052'
@@ -46,7 +44,35 @@ while True:
 			print name + ' not match'
 			print line
 			sys.exit()
-			
-
 result.close()
+[/code]
+
+这样运行完，只是找到了一个内容为“collect the comments.”的提示。
+又没头绪了。
+实在想不出来，只能google了。
+原来trick还在zip。
+zipfile是python的一个用于快速处理zip压缩标准文件的模块。
+zipfile.ZipFile(name):打开zip压缩文件
+ZipFile.read(name[, pwd]):获取zip文档内指定文件的二进制数据
+ZipFile.getinfo(name):获取zip文档内指定文件的信息
+
+[code lang="python"]
+import zipfile, re
+result = file('result','w')
+idx = "90052"
+
+zfile = zipfile.ZipFile("channel.zip", "r")
+while True:
+	data = zfile.read(idx + ".txt")
+	print idx + ":\t" + data
 	
+	idx = "".join(re.findall('[0-9.]', data))
+	if len(idx) == 1:
+		break
+		
+	result.write(zfile.getinfo(idx + '.txt').comment)
+	
+result.close()
+[/code]
+
+好了。出结果了。

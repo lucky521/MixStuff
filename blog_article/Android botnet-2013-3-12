@@ -1,0 +1,91 @@
+Android
+从来没接触过Android，Java只是上过选修课，正好借此项目fre104/AndroidBotNet学习一下Android。
+
+Android的系统层次:
+1、操作系统层 OS
+2、库和运行环境 Libraries & RunTime
+3、应用程序框架 Application Framework
+4、应用程序 Application
+
+1、操作系统层 OS
+Android使用Linux2.6作为操作系统。Android对操作系统的使用包括核心和驱动程序两部分，Android的Linux核心为标准的Linux2.6内核，更多的是需要一些与移动设备相关的驱动程序。主要的驱动如下所示：
+　　显示驱动(Display Driver)：基于Linux的帧缓冲(Frame Buffer)驱动
+　　键盘驱动(KeyBoard Driver)：作为输入设备的键盘驱动
+　　Flash内存驱动(Flash Memory Driver)：基于MTD的Flash驱动程序
+　　照相机驱动(Camera Driver)：常用基于Linux的v4l2(Video for Linux)驱动。
+　　音频驱动(Audio Driver)：常用基于ALSA(Advanced Linux Sound Architecture，高级Linux声音体系)驱动
+　　蓝牙驱动(Bluetooth Driver)：基于IEEE 802.15.1标准的无线传输技术
+　　WiFi驱动(Camera Driver)：基于IEEE 802.11标准的驱动程序
+　　Binder IPC驱动：Andoid一个特殊的驱动程序，具有单独的设备节点，提供进程间通讯的功能
+　　能源管理(Power Management)
+
+2、库和运行环境 Libraries & RunTime
+   C库 ：C语言的标准库，这也是系统中一个最为底层的库。
+   多媒体框架(MediaFrameword)：Android多媒体的核心部分，基于PacketVideo(即PV)的OpenCORE。
+　　SGL：2D图像引擎。
+　　SSL：即Secure Socket Layer位于TCP/IP协议与各种应用层协议之间,为数据通讯提供安全支持。
+　　OpenGL ES 1.0 ：本部分提供了对3D的支持。
+　　界面管理工具(Surface Management)：提供了对管理显示子系统等功能。
+　　SQLite：一个通用的嵌入式数据库。
+　　WebKit：网络浏览器的核心。
+　　FreeType：位图和矢量字体的功能。
+
+   Android运行环境主要指的虚拟机技术Dalvik。Dalvik虚拟机和一般JAVA虚拟机(JVM)不同，它执行的不是JAVA标准的字节码(bytecode)而是Dalvik可执行格式(.dex)中执行文件。在执行的过程中，每一个应用程序即一个进程，二者最大的区别在于JVM是以基于栈的虚拟机(Stack-based)，而Dalvik是基于寄存器的虚拟机(Register-based)。后者的好处在于可以根据硬件实现更大的优化，这更适合移动设备的特点。
+<!--more-->
+3、应用程序框架 Application Framework
+   这一层为应用程序层的开发者提供API，提供的首先包含了UI程序中所需要的各种控件。
+   一个Andoid的应用程序可以利用应用程序框架中的以下几个部分：
+　　  Activity (活动)
+　　  Broadcast Intent Receiver (广播意图接收者)
+　  　Service (服务)
+　  　Content Provider (内容提供者)
+4、应用程序 Application
+   通常以JAVA程序编写，其中还可以包含各种资源文件JAVA程序及相关资源经过编译后，将生成一个APK包。
+
+
+AndroidBotnet项目文件
+.
+|- AndroidManifest.xml 工程表述文件
+|- proguard.cfg 配置文件
+|- assets 数据库资源目录
+     |- dbfile
+|- bin 可执行文件目录
+     |- classes.dex
+     |- SmsService.apk
+|- res 资源文件目录
+     |- drawable-hdpi 高分辨率的图片
+     |- drawable-ldpi 低分辨率的图片
+     |- drawable-mdpi 中等分辨率的图片
+|- src 代码文件目录
+     |- com
+         |- SmsService
+                |- AuxiliaryComponent
+                |- CommandComponent
+                |- ReceiverComponent
+
+一、AndroidManifest.xml
+每个Android项目都必须包含一个AndroidManifest.xml，且文件名固定，应用程序需要通过它向安卓系统提供一些必需的信息。
+它描述了项目中的全局数据，包括activities组件和services组件。
+
+一个必需的<manifest>根节点.在其下的标签有：
+<application>，必需的，包含package中application级别组件声明的根节点。
+	其下有，
+	activity，用来与用户交互。
+	service 能在后台运行任意时间的组件。
+
+<users-permission>请求package正常运所所需赋予的安全许可。
+<user-sdk>指定程序中所需要使用的sdk版本。
+
+
+二、
+android.app.Service 服务是一个应用程序组件，其作用是执行长期运行的操作，而不是与用户交互或为其他程序提供操作。服务会在AndroidManifest.xml中声明。
+android.telephony.SmsManager 负责短信操作管理的对象。
+android.telephony.SmsManager.getDefault() 返回一个SmsManager实例。
+android.telephony.SmsManager.sendTextMessage(目的地址,源地址,短信内容,发送情况,接收情况)
+
+
+三、资源文件
+hdpi里面主要放高分辨率的图片,如WVGA (480x800),FWVGA (480x854)
+mdpi里面主要放中等分辨率的图片,如HVGA (320x480)
+ldpi里面主要放低分辨率的图片,如QVGA (240x320)
+系统会根据机器的分辨率来分别到这几个文件夹里面去找对应的图片，所以在开发程序时为了兼容不同平台不同屏幕，建议各自文件夹根据需求均存放不同版本图片

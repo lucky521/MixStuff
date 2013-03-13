@@ -1,0 +1,71 @@
+漏洞扫描是指基于漏洞数据库，通过扫描等手段对指定的远程或者本地计算机系统的安全脆弱性进行检测，发现可利用的漏洞的一种安全检测（渗透攻击）行为。
+
+网站漏洞扫描工具：主要应用网站漏洞扫描工具，其原理是通过工具通过对网站的代码阅读，发现其可被利用的漏洞进行告示，通过前人收集的漏洞编成数据库，根据其扫描对比做出。
+
+网站被黑后，单纯解决问题不难，网页被人篡改的直接修改到正确的页面就能解决，被攻击导致无法访问大部分换ip解析也能够最快速的解决。但关键是找到原因，防止被继续篡改，被继续攻击。所以找原因才是关键。
+
+
+Nikto是一个开源的web server评估工具，使用Perl基于LibWhisker开发。
+其最新源码在https://github.com/sullo/nikto
+最简单使用：
+$ nikto -h www.lucky521.com
+<!--more-->
+可选项:
+       -Cgidirs+       		扫描CGI目录: 'none', 'all', or values like "/cgi/ /cgi-a/"
+       -Display+       		输出显示设置:
+       		       	           1     显示重定向
+       		       	           2     显示收到的cookies
+       		       	           3     显示200/OK响应
+       		       	           4     显示需要认证的url
+       		       	           D     Debug Output
+       		       	           V     Verbose Output
+       -dbcheck       		检查扫描数据库的语法错误
+       -evasion+        	绕开入侵检测系统的技术:
+       		       	           1     Random URI encoding (non-UTF8)
+       		       	           2     Directory self-reference (/./)
+       		       	           3     Premature URL ending
+       		       	           4     Prepend long random string
+       		       	           5     Fake parameter
+       		       	           6     TAB as request spacer
+       		       	           7     Change the case of the URL
+       		       	           8     Use Windows directory separator (\)
+       -findonly      		只扫描http(s)端口
+       -Format+     		输出文件格式:
+       		       	           htm   HTML Format
+       		       	           csv   Comma-separated-value
+       		      	           txt   默认格式
+                                   xml   XML Format
+       -host+       		指定被扫描的IP或者主机名
+       -id+          		认证主机，格式为 “用户名:密码”
+       -mutate+           	关键字猜测文件
+       		       	           1     Test all files with all root directories
+       		       	           2     Guess for password file names
+       		       	           3     Enumerate user names via Apache (/~user type requests)
+       		       	           4     Enumerate user names via cgiwrap (/cgi-bin/cgiwrap/~user type requests)
+       -nolookup       		skip name lookup
+       -port+			指定扫描的端口，没有指定，则默认80
+       -root+       		prepend root value to all requests, format is /directory
+       -ssl 	     		force ssl mode on port
+       -Single 	     		Single request mode
+       -timeout+     		设置超时时间（默认2秒）
+       -Tuning+	     		选取特定的扫描项目，如果不设置此项默认为全部。
+       		       	           0     File Upload
+       		       	           1     Interesting File / Seen in logs
+       		       	           2     Misconfiguration / Default File
+       		       	           3     Information Disclosure
+       		       	           4     Injection (XSS/Script/HTML)
+       		       	           5     Remote File Retrieval - Inside Web Root
+       		       	           6     Denial of Service
+       		       	           7     Remote File Retrieval - Server Wide
+       		       	           8     Command Execution / Remote Shell
+       		       	           9     SQL Injection
+       		       	           a     Authentication Bypass
+       		       	           b     Software Identification
+       		       	           c     Remote Source Inclusion
+       		       	           x     Reverse Tuning Options (i.e., include all except specified)
+       -useproxy         	使用代理服务器
+
+
+nikto利用了OSVDB中的漏洞信息数据。OSVDB(Open Source Vulnerability Database)是一个漏洞搜集的开源项目，目前已发现并提供了近90000个系统漏洞，对每个漏洞都按序编号，很容易在其网站上查询到。
+
+
