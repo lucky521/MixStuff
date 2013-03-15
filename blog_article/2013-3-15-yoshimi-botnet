@@ -1,0 +1,164 @@
+yoshimi-一个值得研究学习的Android-Botnet
+
+该Botnet的服务器端由Tornado框架编写，并使用了Bootstrap。客户端由Java编写的Android程序。
+我想，这简直就是为我量身定做的学习机会啊。好代码一定要珍惜。
+所以这个项目的学习要由浅入深，最终足够深入和清晰。
+
+#################################
+一，服务器端的部署
+1.所需要的支持模块安装：
+/setup/depends.sh
+
+2.在mysql中建立数据库并配置：
+其对mysql数据库的操作使用的是sqlalchemy。
+修改/models/__init__.py
+[code]
+create_engine('mysql://root:lucky@localhost/yoshimi')
+[/code]
+
+3.创建数据库后台
+$ python __main__.py create
+数据库yoshimi中建立了6个表，分别是
+call_info,contact,permission,phone_bot,remote_command,user
+其中user为控制端用户
+
+4.开启控制端服务器
+$ python __main__.py serve
+这是控制端的tornado已经开始运行。
+访问http://127.0.1.1:8888/即可看到。
+其界面框架使用了Bootstrap，很漂亮。
+
+5.在网页上注册一个账户，即可登录。
+
+<!--more-->
+#################################
+二，客户端的部署
+1.在Android的设计中，资源的访问需要得到权限的支持，因此一个app要先声明并申请其权限。
+  android.permission.RECEIVE_BOOT_COMPLETED
+  允许一个程序接收到ACTION_BOOT_COMPLETED广播在系统完成启动
+  android.permission.READ_CONTACTS
+  允许程序读取用户联系人数据
+  android.permission.INTERNET
+  允许程序打开网络套接字
+  android.permission.SEND_SMS
+  允许程序发送SMS短信
+  android.permission.READ_SMS
+  允许程序读取短信息
+  android.permission.READ_PHONE_STATE
+  允许程序读取手机状态
+
+2.在AndroidManifest.xml中：
+  1个receiver 用于监听SystemBootReceiver，做出android.intent.action.BOOT_COMPLETED相应，该响应只能由系统发出。
+  2个activity 一个是主activity，
+  android.intent.action.MAIN决定应用程序最先启动此Activity；
+  android.intent.category.LAUNCHER决定此应用程序要显示在程序列表里；
+  另一个是console，
+  android.intent.category.DEFAULT接收一个隐式Intent的activity 
+
+3.在libs目录下：
+  android-support-v4.jar是Android兼容性包，开发者可以将它作为静态库放进Android应用程序中进行编译，这样可以让一个在Android4.0上开发的应用可以在APIlevel 4的Android系统中工作。
+
+4.src源代码目录：
+  基础对象 APIInteraction：利用android.content.Context.getContentResolver().query()查询本机电话簿、通讯录等信息。
+  activity: console, Mainactivity 
+  service: yoshimiService
+
+
+service 内部调用关系
+   |- onCreate
+          |- getRoot 申请root权限
+   |- onStartCommand
+            |- mainloop
+                  |- getversionInformation 获取版本信息并发送
+                  |- getcallInformation 获取通信录信息并发送
+                  |- getcontactInformation 获取联系人信息并发送
+                  |- poll
+                      |- sendSms 发送短信
+
+#################################
+三、服务器端代码理解
+一直还没接触tornado框架，不过外在看起来它和Django还是有点类似的。
+有明显的MVC模式，对应models、templates、handlers。
+
+1.目录templates中：
+  是模板文件(html)。除了主界面的模板main.html之外，又分了四个分支目录,menu,public,sidebar,user。
+
+2.目录static中：
+  存放的是静态文件，如css、js、媒体资源。
+
+3.目录modules中：
+  Menu.py是要根据会话来判断登录者的身份（user,admin,public），从而提供不同的menu界面模板。
+  Sidebar.py也是一样，根据身份来提供不同的sidebar界面模板。
+
+4.目录models中：
+  定义数据模型。
+  BaseObject.py创建了数据的一个基类结构，其中只有id和created（创建日期）两项。
+  其余的6个文件分别创建了6个类，分别对应了mysql数据库中的6个表。
+
+5.目录libs中：
+  为基础功能的创建库。
+  ConfigManager.py 总控
+  Session.py 会话
+  SecurityDecorators.py 安全检查
+  Singleton.py singleton instance
+  
+6.目录handlers中：
+  BaseHandlers.py user和bot两个基础的处理类
+  BotHandlers.py C&C处理
+  UserHandlers.py 控制页面处理
+  ErrorHandlers.py 错误页处理
+  PublicHandlers.py 网站页面处理
+  __init__.py URL映射，开启服务
+  其中与交互控制有关的方法有
+[code]
+ # Bot command and control handlers
+ (r'/bot/hello(.*)', BotHelloHandler, {'dbsession': dbsession})
+ (r'/bot/version(.*)', BotVersionHandler, {'dbsession': dbsession})
+ (r'/bot/calls(.*)', BotCallsHandler, {'dbsession': dbsession})
+ (r'/bot/contacts(.*)', BotContactsHandler, {'dbsession': dbsession})
+ (r'/bot/completed', BotCompletedCommandHandler, {'dbsession': dbsession})
+ (r'/bot/ping', BotPingHandler, {'dbsession': dbsession})
+[/code]
+  
+目前服务器端已经部署完毕，并可以访问。
+有点小悲剧的是，电脑里的Android开发环境还没装好，过年的时候本本一条apt-get install就装好的，怎么现在就这么麻烦呢。囧。
+等明天装好后，测试一下客户端与服务器的交互，然后在实践中再进一步学习它。
+#################################
+PS：小知识点:)
+1、 lambda 在python中可用于定义单行函数
+2、 命名方法中，camel case形式为AppUser，snake case形式为app_user
+3、 @declared_attr可以为对象的属性建立特定规则，@classmethod设计访问方法
+4、 显式Intent：通过指定Intent组件名称来实现的，它一般用在知道目标组件名称的前提下，一般是在相同的应用程序内部实现的。隐式Intent：通过Intent Filter来实现的，它一般用在没有明确指出目标组件名称的前提下，一般是用于在不同应用程序之间。
+5、 Java的一种HTTP接口使用。
+ GET方法:
+[code lang="java"]
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+//定义HttpClient
+HttpClient client = new DefaultHttpClient(); 
+//实例化HTTP方法 GET
+HttpGet request = new HttpGet(); 
+//填充
+request.setHeader("Meme", URLEncoder.encode(HEADER));
+request.setHeader("Uuid", URLEncoder.encode(uuid));
+request.setURI(new URI(uri));
+//创建response对象，接受response
+HttpResponse response = null; 
+response = client.execute(request);
+[/code]
+
+ POST方法：
+[code lang="java"]
+//定义HttpClient
+HttpClient client = new DefaultHttpClient();
+//实例化HTTP方法 POST
+HttpPost httppost = new HttpPost(uri);
+//填充
+httppost.setHeader("Meme", HEADER);
+httppost.setHeader("Uuid", uuid);
+httppost.setEntity(new UrlEncodedFormEntity(parameters));
+//创建response对象，接受response
+HttpResponse response = null;
+response = client.execute(httppost);
+[/code]

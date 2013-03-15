@@ -1,0 +1,48 @@
+numpy的矩阵运算
+
+python的最有名的两个科学计算模块，numpy和scipy，它们已经被深度用于机器学习领域。本文是在学习numpy的一个子模块linalg，这个单词是Linear algebra（线性代数）的缩合而成，因而它的功能就是提供强大的矩阵运算操作。
+
+首先一个矩阵在numpy中对应有矩阵对象numpy.matrix。
+其最基础的几个运算：
+1.求矩阵的逆矩阵
+  >>> inv(A)
+2.求矩阵的行列式的值
+  >>> det()
+3.计算矩阵的加法、乘法
+  >>> A + B
+  >>> A * B
+4.计算Ax=B中的x
+  >>> solve(A, B)
+5.求矩阵的转置
+  >>> A.T
+
+
+文件输入输出格式：
+numpy.load和numpy.save函数以NumPy专用的二进制类型保存数据，这两个函数会自动处理元素类型和shape等信息，不过二进制类型文件不容易与其他语言程序交互。
+另一个比较方便的方法，使用numpy.savetxt()和numpy.loadtxt()以文本格式数据的输入输出，有了它，就可以方便的进行交互，不拘泥于数据格式。
+
+>>> savetxt("a.txt", matrix)
+>>> loadtxt("a.txt")
+缺省是按照'%.18e'格式保存数据，以空格分割。
+
+可以改为保存为整数"%d"，以逗号为分割delimiter=","。
+>>> savetxt("a.txt", a, fmt="%d", delimiter=",")
+这样读取的时候也要声明分隔符。
+>>> loadtxt("a.txt", delimiter=",")
+
+从文件读取进来的对象默认是数组类型numpy.ndarray，可以把它转化matrix。
+>>> A = numpy.matrix(B)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
