@@ -1,0 +1,86 @@
+yoshimi服务器端的Tornado和sqlalchemy
+######################################
+Tornado与现有主流的Web服务器框架的一个区别：非阻塞式。其每秒可以处理以千计的连接，因此它是实时Web服务的一个理想框架。
+最简单的开启Server的方法是
+[code]
+application.listen(8888)
+tornado.ioloop.IOLoop.instance().start()
+[/code]
+为了提高性能，Tornado 可以在 HTTPServer 调用 add_sockets() 前创建多个子进程，利用多 CPU 的优势来处理并发请求。
+[code]
+from tornado.httpserver import HTTPServer
+sockets = netutil.bind_sockets(8888)
+tornado.process.fork_processes(0)
+server = HTTPServer(application)
+server.add_sockets(sockets)
+tornado.ioloop.IOLoop.instance().start()
+[/code]
+
+######################################
+
+tornado.web.Application对象中不仅定义URL与响应函数的映射，还可以定义了模板文件的位置，cookie_secret参数的设计，login_url的位置，以及其他值的设定。Tornado中提供了 set_secure_cookie() 这个方法来对 cookie 做签名。签名时需要提供一串秘钥，即生成 tornado.web.Application 对象时的 cookie_secret 参数。
+
+
+Tornado中的模板语言依然是双花括号{{ }}中表示变量，{% %}中表示语句。tornado.web中的函数render()和render_string()要将模板文件转换成字符串，从而能在Application中与URL做映射。函数的第一个参数是模板文件，后面的参数是模板中的变量参数。
+
+<!--more-->
+######################################
+sqlalchemy模块负责与mysql数据库的自动交互
+
+[code]
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+# 建立一个数据库引擎
+engine = create_engine('mysql://root:123456@localhost/yoshimi')
+# 建立数据库操作会话
+Session = sessionmaker(bind=engine, autocommit=True)
+# 实例化数据库操作会话
+session = Session(autoflush = True)
+# 得到数据库操作Session后就可以执行SQL了
+session.execute('这里是SQL语句')
+[/code]
+
+不过使用SQL显然不是好主意，因为sqlalchemy提供了更为简单直观的操作方式。
+[code]
+# 表中的属性用Column表示
+from sqlalchemy import Column
+# 表之间的外键关联关系
+from sqlalchemy.orm import relationship, backref
+[/code]
+
+[code]
+# 创建一个BaseModel类，这个类的子类可以与mysql中的一个表关联起来。
+# 在yoshimi项目中，基类cls有两个属性（id,created），这两个属性将是在子类对应的表中都有的。
+class DatabaseObject(object):
+	id = Column(Integer, primary_key = True)
+	created = Column(DateTime, default = datetime.now)
+
+BaseObject = declarative_base(cls = DatabaseObject)
+[/code]
+
+再定义该基类的子类，每个子类与一个表相关联。在子类中定义表的列名和操作。例如yoshimi中的表Contact：
+[code]
+class Contact(BaseObject):
+	phone_bot_id = Column(Integer, ForeignKey('phone_bot.id'), nullable = False)
+	name = Column(Unicode(64))
+	phone_number = Column(Unicode(64))
+	email = Column(Unicode(64))
+
+[/code]
+上面四个是该表特有的属性，在@classmethod后定义对象的方法来设计对表的操作
+
+[code]
+@classmethod
+# 查询整个表的数据
+def get_all(cls):
+       	return dbsession.query(cls).all()
+
+@classmethod
+# 查询id为"contact_id"的项
+def by_id(cls, contact_id):
+	return dbsession.query(cls).filter_by(id = contact_id.encode('utf-8', 'ignore')).first()
+[/code]
+
+########################################
+Tornado没有Session，所以要用Session的话需要自己编写其实现。
+

