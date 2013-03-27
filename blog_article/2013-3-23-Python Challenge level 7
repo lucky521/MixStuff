@@ -1,0 +1,83 @@
+上篇pythonChallenge博文讲到得到了这个地址，就没在看下去，以为结束了。
+http://www.pythonchallenge.com/pc/def/hockey.html
+
+今天开始做下一题，看到：
+it's in the air. look at the letters.
+
+原来上一关还没结束！而且这句话是这么的有意义，我却没有看懂。
+
+脑子不够灵活啊，活该做码农！
+
+http://www.pythonchallenge.com/pc/def/oxygen.html
+
+扭捏的开始注意到那张图有问题。但是我不会python的关于图的模块Image。只能看答案了。
+
+<!--more-->
+[code lang="python"]
+import Image
+im = Image.open("oxygen.png")
+print "image info: ", im.format, im.size, im.mode
+
+#find y
+y_begin = 0
+while 1:
+	# getpixel返回指定坐标点的像素的RGB三原色值。
+	p = im.getpixel((0, y_begin)) #参数是坐标
+	if p[0] == p[1] == p[2]:
+		print "p : ",p
+		break
+	y_begin += 1
+
+#find x
+x_end = 0
+while 1:
+	p = im.getpixel((x_end, y_begin))
+	if not p[0] == p[1] == p[2]:
+		break
+	x_end += 1
+
+print 'Y first coordinate: ', y_begin
+print 'X last coordinat', x_end
+
+message = []
+for i in range(0, x_end, 7): #XXX:why 7?
+	p = im.getpixel((i, y_begin))
+	message.append(chr(p[0]))
+print message
+# smart guy you made it the next level is [105,110,116,101,103,114,105,116,121]
+
+level = [105,110,116,101,103,114,105,116,121]
+print ''.join([chr(i) for i in level])
+[/code]
+
+
+由本关注意到一点RGB的三个值相同时的颜色总是灰色。好歹学过多年素描，连这都不知道。。
+现在学着用Image画一张图。还是带加密信息的捏，不去弄背景来掩饰了。
+
+与Image.open()对应的是Image.save()，与Image.getpixel()对应的是Image.putpixel()。
+
+[code lang="python"]
+import Image
+size = 220
+key = ['a','n','l','u',' ','i','s',' ','g','o','o','d']
+s = [ord(i) for i in key]
+color_s = [tuple([i,i,i]) for i in s]
+mod = size/(len(key)+1)
+
+im = Image.new("RGB",(size, size))
+color = [255 ,255 ,255]
+num = -1
+for x in range(0, size):
+	for y in range(0, size): 
+		if x%mod == 0 and x==y and x>0 and num < len(key)-1:
+			num += 1
+			im.putpixel((x,y),tuple(color_s[num]))
+		else:
+			im.putpixel((x,y),tuple(color))
+			
+im.save("mypaint.png","PNG")
+[/code]
+
+
+
+
