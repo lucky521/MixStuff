@@ -1,0 +1,71 @@
+本博文的话题是数据库的入门涉猎，写了在编程时如何连接和操作数据库的。整理的挺乱的。简单记录一下。
+
+#######################################################################
+常见的数据库品牌：
+1）ACCESS：是系统自带的一种数据库，是与空间共存的，以文件形式保存，文件的扩展名是MDB。
+2）MYSQL：mysql 和 php 的搭配是最合适的。
+3）MSSQL：由微软开发的我们最常见的数据库。
+4）Oracle:大型系统常用的数据库。
+5）Sybase
+6）PostgreSQL：完全开源的数据库，适合做二次开发。
+7）SQLite：轻型的嵌入式关系数据库
+8）MongoDB：一个高性能，开源，无模式的文档型数据库
+
+
+<!--more-->
+下面是四种访问数据库的方式：
+#######################################################################
+DAO 已经属于落后的技术，适用于单系统应用程序或小范围本地分布使用。
+
+CDaoDatabase对象代表了一个到数据库的连接
+CDaoDatabase db;
+db.Open（“test.mdb”，FALSE,FALSE,_T（“”）；
+
+#######################################################################
+ADO 是一项微软的技术，在Windows环境中使用。ADO中最重要的对象有三个：Connection、Command和Recordset，它们分别表示连接对象、命令对象和记录集对象。ADO编程的关键，就是熟练地运用ADO提供的各种对象(object)、方法(method)、属性(property)和容器（collection）。
+
+#######################################################################
+ODBC连接数据库
+这一方式比较常见，适用于不同的语言和数据库。需要在控制面板-管理工具-数据源ODBC里面添加用户数据源。MFC中的ODBC类（CDatabase、CRecordset)。
+
+#######################################################################
+使用数据库自身提供的访问接口函数
+
+如MySQL，连接方法VS2010的方法，如下
+1.在VS中，打开项目-属性，打开配置属性-VC++目录，在“包含目录”中添加mysql目录里的include目录，如c:\mysql\mysql server\include；在“库目录”中添加mysql目录里的lib\opt目录，如c:\mysql\mysql server\lib\opt。
+
+2.在stdafx.h中，添加
+[code lang="cpp"]
+#include "winsock.h"
+#include "mysql.h"
+#pragma comment(lib, "libmysql.lib")
+[/code]
+
+3.字符集问题：
+	项目-属性-配置属性-常规-字符集：使用多字节字符集
+
+#######################################################################
+MySQL远程访问权限的开启:
+1.首先确认一下3306是否对外开放，MySQL默认状态下是不开放对外访问功能的。
+[code]
+$ netstat -an | grep 3306
+[/code]
+
+如果只是监听本地端口的话，就要开放这个端口了。
+[code]
+$ sudo gedit/etc/mysql/my.cnf
+#找到bind-address = 127.0.0.1，把这句话注释掉
+#重启mysql
+$ sudo service mysql restart
+[/code]
+然后在查看端口，就看到3306开放了。
+
+2.第二步是要创建一个有用远程访问权限的用户
+[code]
+mysql> grant all privileges on *.* to '这里是访问者用户名'@"这里是访问者的ip" identified by "这里是访问密码"; 
+mysql> flush privileges;
+[/code]
+如果想撤销某用户的权限，
+[code]
+$ revoke all on *.* from '用户名'@'地址';
+[/code]
