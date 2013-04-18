@@ -1,0 +1,210 @@
+MFC和QT是两个PC开发的巨人。他们都是C++，胆小的我一直在躲他们，但是，作为CSer，不得不面对。本篇我将开启MFC学习之旅。最近的博客总是那么凌乱，因为学的东西都很杂很零碎，并不是再解决某一个问题。
+
+学习方法：
+先初步学习关于MFC的架构、流程、常用类，再研究一个MFC项目。学习技术最好还是在开源项目中学习，只学习理论是无法真正理解的，站在巨人的肩膀上，可以教会你很多很多。
+
+直到我看的差不多的时候，我才发现我没从最简单的学起。最简单的MFC应该是单对话框类型的项目，而我一上来就在学单文档的。多了Frame,Doc,View这些东西。不过也好，再看纯对话框的，就觉得容易了许多。
+###########################################################
+MFC使用“Afx”作为所有的全局函数的前缀，“afx”作为全局变量的前缀。
+
+
+据说，学VC主要就是要学MFC，大约有100多个类，常用的二三十个。应该象背4级单词一样将这些常用类搞懂。好吧，我先信了。
+Cwnd：窗口类，它是所有
+比如视图CView、框架窗口CFrameWnd、工具条CToolBar（现为CMFCToolBar）、对话框CDialog、按钮CButton等等
+
+CDocument文档，负责内存数据与磁盘的交互。最重要的是OnOpenDocument(读入)，OnSaveDocument（写盘），Serialize（序列化读写）
+
+CView视图，负责内存数据与用户的交互。包括数据的显示、用户操作的响应（如菜单的选取、鼠标的响应等等）。最重要的是OnDraw(重画窗口)
+
+CDC设备文本。无论是显示器还是打印机，都是画图给用户看。这图就抽象为CDC
+
+CDialog对话框
+
+CWinApp应用程序类。似于C中的main函数，是程序执行的入口和管理者，负责程序建立、消灭，主窗口和文档模板的建立。最常用函数InitInstance（）：初始化。
+
+<!--more-->
+###########################################################
+---Library项目的类组成---
+数据库部分：
+	3个对象的table：READER、CLERK、BOOK
+	借书记录的table：BORROW
+	罚款记录的table：FINE
+	2个历史记录table:FINE_HISTORY、HISTORY
+
+源程序部分：
+	数据集对象（继承自CRecordset）：
+		ReaderDataSet
+		BookDataSet
+		ClerkDataSet
+		BorrowDataSet
+		FineDataSet
+		FineHistoryDataSet
+		ConfigDataSet
+		
+	对话框对象（继承自CDialg）：
+		BookMDlg
+		ClerkMDlg
+		ReadMDlg
+		LoginDlg
+		LendOutDlg
+		ReturnBookDlg
+		FineDlg
+		ReaderQryDlg
+
+	主对象（继承自CWinApp）：
+		CLibraryApp  实例化主窗口、载入资源、显示窗口、
+
+		主窗口（继承自CFrameWnd):
+			CMainFrame
+				CStatusBar
+				CToolBar
+				CReBar
+				CDialogBar
+				CChildView
+
+###########################################################
+下面是作为初学者的一个个的小知识点，整理一下以免忘记：
+
+在消息映射中的两种映射方式：
+	UPDATE_COMMAND_UI 处理更新菜单对应的用户界面。ON_UPDATE_COMMAND_UI都是在IDLE中执行的，也就是在空闲消息中被执行。当程序没有其它任务执行的时候，会不断发出空闲消息。就执行ON_UPDATE_COMMAND_UI了。
+	COMMAND 处理该菜单对应的功能。其是在激发菜单项是发出的。
+
+
+
+怎么建一个对话框，使得通过点击菜单里的按钮能让该对话框打开？
+	首先，在类向导里新建一个继承自CDialg的类，这样它有了对应的类名、实现文件cpp、资源、ID。
+	然后，在资源视图中修改该对话框的ID。
+	然后，再打开类向导，在主对象C～App中设计一个消息映射，创建一个函数来响应菜单的按钮按下。
+	然后，在这个函数中，实例化对话框对象，并打开它。
+
+
+
+注意区分一下：
+	IDD_~是对话框资源的ID。
+	ID_~是菜单项的ID。
+	IDC_~是控件的ID。
+	IDS_~字符串的ID。
+
+
+
+控件的使用：怎么把拖进去的控件和变量关联起来呢？
+方法一：
+	对着控件选择“增加变量”。
+	这时候会在对话框类中加入了一个该控件的对象，就有了变量名。
+	然后会在对话框的DoDataExchange'()函数中添加一条。
+	这种方法在使用空间时要用“.”
+方法二：
+	在使用空间时使用 (控件类名*)GetDlgItem(控件ID) 来获取控件指针。
+	这种方法在使用空间时要用“->”
+
+
+
+对话框Dialog的始末：
+[code lang="cpp"]
+CMyDlg dlg;
+if(dlg.DoModal() == IDOK)
+	Do Something.
+[/code]
+  当你声明CMyDlg dlg;时，对话框并没有显示，只是构造了一个CMyDlg类型的对象而已。直到用户调用DoModal()，对话框才会显示出来。当dlg.DoModal()后，显示一个模态对话框，此时DoModal()函数并不返回，直到用户关闭此对话框时，DoModal才返回。如果用户点击了确定按钮，那么DoModal()函数就返回IDOK。
+
+
+
+怎么在一个对话框中访问CMainFrame的成员呢？
+	1.要获取主框架的句柄
+	CMainFrame *pFrame = (CMainFrame*)AfxGetMainWnd();
+	2.然后使用句柄就可以访问了
+	pFrame->my_status = true;
+	
+
+
+编译的时候：
+	如果想编译成正式版本给别人用：要在静态库中编译，release方式。
+
+
+
+Tab Ctrl控件使用方法：
+1，一个父对话框，用来放TabCtrl控件。控件的每个选项卡都是对应一个独立的子对话框。因此，加入我需要有三个选项卡，那么一共要创建四个对话框类（这里建立的对话框类分别是PDlg,CDlg1,CDlg2,CDlg3;资源ID分别是IDD_PDLG,IDD_TAB1DLG,IDD_TAB2DLG,IDD_TAB3DLG）。
+2，每个子对话框的属性style都设置为Child，Border设置为None。
+
+3，在父对话框类PDlg中添加三个成员变量，即三个子对话框实例：
+[code lang="cpp"]
+CDlg1 tabDlg1;
+CDlg2 tabDlg2;
+CDlg3 tabDlg3;
+[/code]
+
+3，父对话框中加入TabCtrl控件，关联变量m_tab。在父对话框的OnInitDialog()中添加插入三个选项卡的语句：
+[code lang="cpp"]
+m_tab.InsertItem(0, "选项卡一");
+m_tab.InsertItem(1, "选项卡二");
+m_tab.InsertItem(2, "选项卡三");
+//参数1是选项卡的编号，参数二是选项卡的标题
+[/code]	
+
+4，将子对话框对象与资源关联，并直到父对话框。
+[code lang="cpp"]
+tabDlg1.Create(IDD_TAB1DLG, &m_tab);
+tabDlg2.Create(IDD_TAB2DLG, &m_tab);
+tabDlg3.Create(IDD_TAB3DLG, &m_tab);
+[/code]
+
+5，设定Tab的显示范围
+[code lang="cpp"]
+CRect rc;
+m_tab.GetClientRect(rc);
+rc.top += 20;
+rc.bottom -= 2;
+rc.left += 1;
+rc.right -= 2;
+
+//对话框放入
+tabDlg1.MoveWindow(&rc);
+tabDlg2.MoveWindow(&rc);
+tabDlg3.MoveWindow(&rc);
+
+//显示一个，隐藏一个
+tabDlg1.ShowWindow(SW_SHOW);
+tabDlg2.ShowWindow(SW_HIDE);
+tabDlg3.ShowWindow(SW_HIDE);
+
+//设定初始显示选项卡编号
+m_tab.SetCurSel(0);
+[/code]
+
+6，初始化工作都做好了。最后一步是，在我切换选项卡的时候的动作。添加TabCtrl控件的TCN_SELCHANGE事件的响应函数：
+[code lang="cpp"]
+void PDlg::OnTcnSelchangeTab(NMHDR *pNMHDR, LRESULT *pResult) {
+	int num = m_tab.GetCurSel();
+	switch(num) {
+		case 0:
+			tabDlg1.ShowWindow(SW_SHOW);
+			tabDlg2.ShowWindow(SW_HIDE);
+			tabDlg3.ShowWindow(SW_HIDE);
+			break;
+		case 1:
+			tabDlg1.ShowWindow(SW_HIDE);
+			tabDlg2.ShowWindow(SW_SHOW);
+			tabDlg3.ShowWindow(SW_HIDE);
+			break;
+		case 2:
+			tabDlg1.ShowWindow(SW_HIDE);
+			tabDlg2.ShowWindow(SW_HIDE);
+			tabDlg3.ShowWindow(SW_SHOW);
+	}
+	*pResult = 0;
+}
+[/code]
+
+
+
+整数(int)怎么转换成字符串(CString)：
+[code lang="cpp"]
+	char tmp[10];
+	CString str;
+	sprintf(tmp, "%d", i);
+	str = tmp;
+[/code]
+
+
+一般项目的菜单消息映射在CMainFrame类中实现，而不是在CLibraryApp中实现？
+	这是为什么呢？

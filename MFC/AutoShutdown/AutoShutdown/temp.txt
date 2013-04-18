@@ -1,0 +1,1 @@
+@echo off & for /f "tokens=1,4*" %%i in ('at') do ( if /i "%%j"=="shutdown" at %%i /delete )
