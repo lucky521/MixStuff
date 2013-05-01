@@ -1,0 +1,39 @@
+目的：从英文文本数据中提取单词
+方法：
+	正则匹配单词
+	统一为小写形式
+	格式化单词：去除动词时态、名词复数
+	检查单词拼写
+
+
+格式化单词用到了NLTK（Natural Language Toolkit）中的stemming，检查单词拼写用到了模块enchant。
+
+
+
+[code lang="python"]
+from nltk import PorterStemmer 
+import enchant
+import re
+...
+...
+pattern = re.compile("(?<= )([a-z]|[A-Z])*([a-z]|[A-Z])(?= )")
+match = pattern.search(line)
+if match :
+	word = match.group().lower()
+	word = PorterStemmer().stem_word(word)
+	if d.check(word) and len(word) > 1:
+		...
+		...
+...
+...
+[/code]
+
+
+
+最近好没状态，零散着干了些小事情，好没成就感。
+写了一个安卓上的WebView小程序；
+写了一个MFC的定时关机程序；
+试着破解一个需要注册的图像处理工具，失败了。
+
+有点什么都做不好的感觉，继续加油了。
+
