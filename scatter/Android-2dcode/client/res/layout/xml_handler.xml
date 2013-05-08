@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dip"
+        android:paddingLeft="10dip"
+        android:text="数据库中的信息"
+        android:textAppearance="?android:attr/textAppearanceMedium" >
+    </TextView>
+
+    <ListView
+        android:id="@+id/xml_list"
+        android:layout_width="fill_parent"
+        android:layout_height="391dp"
+        android:layout_weight="0.89" >
+    </ListView>
+
+    <Button
+        android:id="@+id/back_2"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/back_to_home" />
+
+</LinearLayout>

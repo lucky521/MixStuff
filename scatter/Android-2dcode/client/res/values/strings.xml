@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="hello">欢迎使用本系统</string>
+  <string name="app_name">信息追溯系统</string>
+  <string name="app_about">关于</string>
+  <string name="app_about_msg">毕业设计作者：~~</string>
+  <string name="server_host">http://12.12.12.114/jsondemo/</string>
+  
+  <string name="select_title1">二维码扫描</string>
+  <string name="select_title2">二维码生成</string>
+  <string name="select_title3">数据库连接测试</string>
+  <string name="select_title4">扩展功能</string>
+  
+  <string name="back_to_home">返回主界面</string>
+  <string name="str_ok">确认</string>
+  <string name="str_exit">退出</string>
+  <string name="scanner_result_title">扫描结果</string>
+  
+  <string name="product_info1">名称</string>
+  <string name="product_info2">产地</string>
+  <string name="product_info3">生产时间</string>
+  <string name="product_info4">联系方式</string> 
+  
+</resources>

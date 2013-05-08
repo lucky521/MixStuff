@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:orientation="vertical" 
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent" 
+	android:paddingLeft="10dip"
+	android:paddingRight="10dip">
+	<LinearLayout android:id="@+id/linearLayout1"
+		android:layout_height="wrap_content" 
+		android:layout_width="fill_parent">
+		<TextView android:textAppearance="?android:attr/textAppearanceMedium"
+			android:layout_width="wrap_content" android:text="TextView"
+			android:layout_height="wrap_content" android:id="@+id/item_id" android:paddingRight="30dip">
+		</TextView>
+		<TextView android:textAppearance="?android:attr/textAppearanceMedium"
+			android:layout_width="wrap_content" android:text="TextView"
+			android:layout_height="wrap_content" android:id="@+id/item_status" android:paddingRight="30dip">
+		</TextView>
+		<TextView android:textAppearance="?android:attr/textAppearanceMedium"
+			android:layout_width="wrap_content" android:text="TextView"
+			android:layout_height="wrap_content" android:id="@+id/item_name">
+		</TextView>
+	</LinearLayout>
+	
+	<LinearLayout android:id="@+id/linearLayout2"
+		android:layout_height="wrap_content" 
+		android:layout_width="fill_parent">
+		<TextView android:textAppearance="?android:attr/textAppearanceMedium"
+			android:layout_width="wrap_content" android:text="TextView"
+			android:layout_height="wrap_content" android:id="@+id/item_tool" android:paddingRight="30dip">
+		</TextView>
+		<TextView android:textAppearance="?android:attr/textAppearanceMedium"
+			android:layout_width="wrap_content" android:text="TextView"
+			android:layout_height="wrap_content" android:id="@+id/item_number">
+		</TextView>
+	</LinearLayout>
+
+</LinearLayout>

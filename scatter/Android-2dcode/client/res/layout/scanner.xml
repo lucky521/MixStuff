@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:id="@+id/FrameLayout01"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
+	xmlns:android="http://schemas.android.com/apk/res/android">
+	
+	<SurfaceView android:layout_height="fill_parent"
+		android:id="@+id/sfvCamera" android:layout_width="fill_parent">
+	</SurfaceView>
+	
+	<RelativeLayout android:id="@+id/RelativeLayout01"
+		android:layout_height="fill_parent" android:layout_width="fill_parent">
+		
+		<View android:layout_centerVertical="true"
+			android:layout_centerHorizontal="true" android:layout_width="300dip"
+			android:background="#55FF6666" android:id="@+id/centerView"
+			android:layout_height="180dip">
+		</View>
+		
+		<TextView android:layout_centerHorizontal="true"
+			android:layout_width="wrap_content" android:layout_below="@+id/centerView"
+			android:layout_height="wrap_content" 
+			android:text="正在扫描..."
+			android:id="@+id/txtScanResult" 
+			android:textColor="#FF000000">
+		</TextView>
+		<Button
+		    android:id="@+id/back_2"
+		    android:layout_width="fill_parent"
+		    android:layout_height="wrap_content"
+		    android:text="@string/back_to_home"/>
+
+		<ImageView
+		    android:id="@+id/ImageView01"
+		    android:layout_width="160dip"
+		    android:layout_height="100dip"
+		    android:layout_alignLeft="@+id/centerView"
+		    android:layout_below="@+id/back_2" />
+
+	</RelativeLayout>
+
+</FrameLayout>
