@@ -10,3 +10,6 @@ USA-time:Jan 1,2013. 注册账户
 
 
 I will use English at this site.
+
+
+This repo collects pieces of my work or personal development in 2013. 
